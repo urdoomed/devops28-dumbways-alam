@@ -26,7 +26,7 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no ${server} << EOF
                         cd ${directory}
                         docker compose build
-			docker compose up -d
+						docker compose up -d
                         exit
                         EOF
                     """
