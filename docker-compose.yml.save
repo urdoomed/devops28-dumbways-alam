@@ -1,0 +1,8 @@
+versoin: '4'
+services:
+  frontend:
+  container_name: wayshub-frontend
+  image: alam/wayshub-frontend:latest
+  stdin_open: true
+  ports:
+    - 3069:3000
