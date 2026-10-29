@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "alamsyah",
+    "password": "Hardiansyah1!",
+    "database": "wayshubnew",
+    "host": "database",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "alamsyah",
+    "password": "Hardiansyah1!",
+    "database": "database",
+    "host": "database",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "alamsyah",
+    "password": "Hardiansyah1!",
+    "database": "wayshubnew",
+    "host": "database",
+    "dialect": "mysql"
+  }
+}
