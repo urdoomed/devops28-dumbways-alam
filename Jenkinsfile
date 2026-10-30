@@ -25,9 +25,10 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${server} << EOF
                         cd ${directory}
-						echo "=== Memulai Build ==="
+			echo "=== Memulai Build ==="
                         docker compose build
-						docker compose up -d
+			echo "=== Memulai Deploy ==="
+			docker compose up -d
                         exit
                         EOF
                     """
