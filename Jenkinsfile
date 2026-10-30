@@ -62,10 +62,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh """
                             ssh -o StrictHostKeyChecking=no ${server} << EOF
-                            echo "=== Login to Docker Hub ==="
                             echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
-                            
-                            echo "=== Pushing to Docker Hub ==="
                             docker push ${dockerUser}/wayshub-backend:${DOCKER_TAG}
                             docker push ${dockerUser}/wayshub-frontend:${DOCKER_TAG}
                             exit
@@ -82,7 +79,6 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${server} << EOF
                         cd ${directory}
-                        echo "=== Deploying App ==="
                         docker compose up -d
                         exit
                         EOF
