@@ -20,7 +20,8 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${server} << EOF
                         cd ${directory}
-                        git pull ${remote} ${branch}
+			git stash
+                        git pull ${remote} ${branch} -X theirs
                         exit
                         EOF
                     """
@@ -78,6 +79,7 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${server} << EOF
                         cd ${directory}
+			docker rm -f wayshub-backend || true
                         docker compose up -d --no-deps backend
                         exit
                         EOF
