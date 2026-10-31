@@ -34,6 +34,7 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${server} << EOF
                         cd ${directory}
+                        echo 'Build"
                         docker build -t ${dockerUser}/wayshub-${SERVICE_NAME}:${DOCKER_TAG} ./backend/wayshub-backend
                         exit
                         EOF
