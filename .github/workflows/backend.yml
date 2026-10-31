@@ -1,4 +1,4 @@
-name: Backend CI/CD
+name: Backend CI/CD Pipeline
 
 on:
   push:
@@ -7,37 +7,44 @@ on:
 jobs:
   deploy-backend:
     runs-on: ubuntu-latest
+    
     environment: production 
 
     steps:
+   
       - name: Checkout Code
         uses: actions/checkout@v4
 
+     
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.REGISTRY_USERNAME }} # Diubah
-          password: ${{ secrets.REGISTRY_PASSWORD }} # Diubah
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Build Backend Image
         run: |
           cd backend/wayshub-backend
           docker build -t ${{ secrets.REGISTRY_USERNAME }}/wayshub-backend:production .
 
+      
       - name: Test Backend Application
-        run: 
+        run: |
           docker run --rm ${{ secrets.REGISTRY_USERNAME }}/wayshub-backend:production node -v
 
+     
       - name: Push Backend Image
         run: |
           docker push ${{ secrets.REGISTRY_USERNAME }}/wayshub-backend:production
 
+      
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
+          host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
           script: |
             cd /home/alam/wayshub
             git fetch --all
@@ -45,6 +52,7 @@ jobs:
             docker rm -f wayshub-backend || true
             docker compose up -d --no-deps backend
 
+      
       - name: Send Discord Notification
         if: always()
         run: |
