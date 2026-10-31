@@ -1,43 +1,44 @@
-name: Backend CI/CD Pipeline
+name: Frontend CI/CD Pipeline
 
 on:
   push:
     branches: [ "master" ]
 
 jobs:
-  deploy-backend:
+  deploy-frontend:
     runs-on: ubuntu-latest
     
+   
     environment: production 
 
     steps:
-   
+     
       - name: Checkout Code
         uses: actions/checkout@v4
 
-     
+      
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build Backend Image
+      
+      - name: Build Frontend Image
         run: |
-          cd backend/wayshub-backend
-          docker build -t ${{ secrets.REGISTRY_USERNAME }}/wayshub-backend:production .
+          cd frontend/wayshub-frontend
+          docker build -t ${{ secrets.REGISTRY_USERNAME }}/wayshub-frontend:production .
 
       
-      - name: Test Backend Application
+      - name: Test Frontend Application
         run: |
-          docker run --rm ${{ secrets.REGISTRY_USERNAME }}/wayshub-backend:production node -v
+          docker run --rm ${{ secrets.REGISTRY_USERNAME }}/wayshub-frontend:production nginx -v
 
-     
-      - name: Push Backend Image
+      - name: Push Frontend Image
         run: |
-          docker push ${{ secrets.REGISTRY_USERNAME }}/wayshub-backend:production
+          docker push ${{ secrets.REGISTRY_USERNAME }}/wayshub-frontend:production
 
-      
+    
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -49,16 +50,16 @@ jobs:
             cd /home/alam/wayshub
             git fetch --all
             git reset --hard origin/master
-            docker rm -f wayshub-backend || true
-            docker compose up -d --no-deps backend
+            docker rm -f wayshub-frontend || true
+            docker compose up -d --no-deps frontend
 
       
       - name: Send Discord Notification
         if: always()
         run: |
           if [ "${{ job.status }}" == "success" ]; then
-            STATUS="✅ **Backend Build SUCCESS**"
+            STATUS="✅ **Frontend Build SUCCESS**"
           else
-            STATUS="❌ **Backend Build FAILED**"
+            STATUS="❌ **Frontend Build FAILED**"
           fi
           curl -H "Content-Type: application/json" -X POST -d "{\"content\": \"$STATUS\nLog: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" ${{ secrets.DISCORD_WEBHOOK }}
