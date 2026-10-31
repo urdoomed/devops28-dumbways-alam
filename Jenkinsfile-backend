@@ -1,0 +1,101 @@
+def branch = "master"
+def remote = "origin"
+def directory = "wayshub"
+def server = "alam@103.193.177.230"
+def cred = "hardiansyah"
+def dockerUser = "hardiansyahpermata"
+
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_TAG = "production"
+        SERVICE_NAME = "backend"
+    }
+
+    stages {
+        stage('1. Pull Repository') {
+            steps {
+                sshagent([cred]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${server} << EOF
+                        cd ${directory}
+                        git pull ${remote} ${branch}
+                        exit
+                        EOF
+                    """
+                }
+            }
+        }
+
+        stage('2. Build Backend') {
+            steps {
+                sshagent([cred]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${server} << EOF
+                        cd ${directory}
+                        docker build -t ${dockerUser}/wayshub-${SERVICE_NAME}:${DOCKER_TAG} ./backend/wayshub-backend
+                        exit
+                        EOF
+                    """
+                }
+            }
+        }
+
+        stage('3. Test Backend') {
+            steps {
+                sshagent([cred]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${server} << EOF
+                        docker run --rm ${dockerUser}/wayshub-${SERVICE_NAME}:${DOCKER_TAG} node -v
+                        exit
+                        EOF
+                    """
+                }
+            }
+        }
+
+        stage('4. Push Backend') {
+            steps {
+                sshagent([cred]) {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ${server} << EOF
+                            echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+                            docker push ${dockerUser}/wayshub-${SERVICE_NAME}:${DOCKER_TAG}
+                            exit
+                            EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('5. Deploy Backend') {
+            steps {
+                sshagent([cred]) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${server} << EOF
+                        cd ${directory}
+                        docker compose up -d backend
+                        exit
+                        EOF
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            withCredentials([string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_URL')]) {
+                sh """curl -H "Content-Type: application/json" -X POST -d '{"content": "✅ **Backend Build SUCCESS**\\nBuild URL: ${env.BUILD_URL}"}' \$DISCORD_URL"""
+            }
+        }
+        failure {
+            withCredentials([string(credentialsId: 'discord-webhook-url', variable: 'DISCORD_URL')]) {
+                sh """curl -H "Content-Type: application/json" -X POST -d '{"content": "❌ **Backend Build FAILED**\\nCek log: ${env.BUILD_URL}"}' \$DISCORD_URL"""
+            }
+        }
+    }
+}
